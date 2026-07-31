@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Voucher Ops Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+<div class="console">
+  <header class="console-header">
+    <div class="brand">
+      <span class="brand-mark">
+        <span class="bar bar-1"></span>
+        <span class="bar bar-2"></span>
+        <span class="bar bar-3"></span>
+        <span class="bar bar-4"></span>
+      </span>
+      <div class="brand-text">
+        <span class="brand-title">Voucher Ops Console</span>
+        <span class="brand-sub">Transactions</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-pill" id="connectionStatus">
+        <span class="dot"></span>
+        <span id="connectionLabel">Connecting</span>
+      </div>
+      <button class="icon-toggle" id="themeToggle" title="Toggle theme">
+        <span id="themeIcon">&#9789;</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="summary-row">
+    <div class="summary-card">
+      <span class="summary-label">Total Transactions</span>
+      <span class="summary-value" id="statTotal">0</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Today's Sales</span>
+      <span class="summary-value" id="statToday">0</span>
+    </div>
+    <div class="summary-card">
+      <span class="summary-label">Revenue</span>
+      <span class="summary-value" id="statRevenue">UGX 0</span>
+    </div>
+  </section>
+
+  <section class="summary-row summary-row-status">
+    <div class="summary-card status-card">
+      <span class="status-dot success"></span>
+      <div class="status-card-text">
+        <span class="summary-label">Successful</span>
+        <span class="summary-value tone-success" id="statSuccess">0</span>
+      </div>
+    </div>
+    <div class="summary-card status-card">
+      <span class="status-dot pending"></span>
+      <div class="status-card-text">
+        <span class="summary-label">Pending</span>
+        <span class="summary-value tone-pending" id="statPending">0</span>
+      </div>
+    </div>
+    <div class="summary-card status-card">
+      <span class="status-dot failed"></span>
+      <div class="status-card-text">
+        <span class="summary-label">Failed</span>
+        <span class="summary-value tone-failed" id="statFailed">0</span>
+      </div>
+    </div>
+    <div class="summary-card status-card">
+      <span class="status-dot refunded"></span>
+      <div class="status-card-text">
+        <span class="summary-label">Refunded</span>
+        <span class="summary-value tone-refunded" id="statRefunded">0</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="chart-panel">
+    <div class="table-panel-header">
+      <h2>Revenue, last 7 days</h2>
+    </div>
+    <canvas id="revenueChart" height="140"></canvas>
+  </section>
+
+  <section class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="searchInput" placeholder="Search by ID, phone number or voucher code..." />
+    </div>
+    <div class="filter-row">
+      <select id="filterDate">
+        <option value="all">All time</option>
+        <option value="today">Today</option>
+        <option value="7d">Last 7 days</option>
+        <option value="30d">Last 30 days</option>
+      </select>
+      <select id="filterStatus">
+        <option value="all">All statuses</option>
+        <option value="SUCCESS">Successful</option>
+        <option value="PENDING">Pending</option>
+        <option value="FAILED">Failed</option>
+        <option value="REFUNDED">Refunded</option>
+      </select>
+      <select id="filterPackage">
+        <option value="all">All packages</option>
+      </select>
+      <select id="filterNetwork">
+        <option value="all">All networks</option>
+        <option value="MTN">MTN</option>
+        <option value="Airtel">Airtel</option>
+      </select>
+      <select id="filterAmount">
+        <option value="all">Any amount</option>
+        <option value="low">Under UGX 5,000</option>
+        <option value="mid">UGX 5,000 - 20,000</option>
+        <option value="high">Above UGX 20,000</option>
+      </select>
+    </div>
+    <div class="export-row">
+      <button class="export-btn" id="exportCsv">Export CSV</button>
+      <button class="export-btn" id="exportExcel">Export Excel</button>
+      <button class="export-btn" id="exportPdf">Export PDF</button>
+    </div>
+  </section>
+
+  <section class="table-panel">
+    <div class="table-panel-header">
+      <h2>Transactions</h2>
+      <button id="refreshBtn" class="refresh-btn">Refresh</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>Transaction ID</th>
+            <th>Date &amp; Time</th>
+            <th>Phone Number</th>
+            <th>Package</th>
+            <th>Amount</th>
+            <th>Payment Method</th>
+            <th>Status</th>
+            <th>Voucher</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsBody">
+          <tr class="empty-row">
+            <td colspan="9">No transactions yet. They'll appear here as customers pay.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay">
+  <aside class="drawer" id="drawer">
+    <div class="drawer-header">
+      <h3>Transaction Details</h3>
+      <button class="drawer-close" id="drawerClose">&times;</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-actions" id="drawerActions"></div>
+  </aside>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
