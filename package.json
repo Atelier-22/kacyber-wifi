@@ -1,0 +1,21 @@
+{
+  "name": "whatsapp-wifi-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp chatbot for WiFi voucher sales - conversation flow, admin dashboard, webhook security",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "import:vouchers": "node src/importVouchers.js",
+    "test": "node test/persisted-airtime-fulfillment.test.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
