@@ -16,7 +16,7 @@ function nextTransactionId() {
   counter += 1;
   const timePart = Date.now().toString().slice(-6);
   const countPart = String(counter % 1000).padStart(3, '0');
-  return `TX${timePart}${countPart}`;
+  return `WF${timePart}${countPart}`;
 }
 
 function methodForNetwork(network) {
