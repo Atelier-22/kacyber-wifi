@@ -13,6 +13,8 @@ module.exports = {
 
   kacyberPay: {
     appId: process.env.KACYBERPAY_APP_ID,
+    dataAppId: process.env.DATA_APP_ID || process.env.KACYBERPAY_APP_ID,
+    airtimeAppId: process.env.AIRTIME_APP_ID || process.env.KACYBERPAY_APP_ID,
     apiKey: process.env.KACYBERPAY_API_KEY,
     environment: process.env.KACYBERPAY_ENV || 'production',
     // Used to verify X-KaCyber-Signature on incoming airtime/data result

@@ -5,9 +5,17 @@ const BASE_URL = config.kacyberPay.environment === 'sandbox'
   ? 'https://sandbox.kacyber.africa/api/v1'
   : 'https://kacyberpay.com/api/v1';
 
-function headers() {
+function airtimeHeaders() {
   return {
-    'X-app-id': config.kacyberPay.appId,
+    'X-app-id': config.kacyberPay.airtimeAppId || config.kacyberPay.appId,
+    'X-API-Key': config.kacyberPay.apiKey,
+    'Content-Type': 'application/json'
+  };
+}
+
+function dataHeaders() {
+  return {
+    'X-app-id': config.kacyberPay.dataAppId || config.kacyberPay.appId,
     'X-API-Key': config.kacyberPay.apiKey,
     'Content-Type': 'application/json'
   };
@@ -29,14 +37,14 @@ async function sendAirtime({ externalReferenceID, msisdn, network, amount, curre
       recipients: [{ msisdn: toE164(msisdn), network, amount }],
       maxNumRetry
     },
-    { headers: headers() }
+    { headers: airtimeHeaders() }
   );
   return response.data;
 }
 
 async function getAirtimeStatus(reference) {
   const response = await axios.get(`${BASE_URL}/airtime/status`, {
-    headers: headers(),
+    headers: airtimeHeaders(),
     params: { reference, includeDetails: true }
   });
   return response.data;
@@ -45,7 +53,7 @@ async function getAirtimeStatus(reference) {
 // ── Data Products Catalog API — GET /v1/data-products (doc 4.1) ──
 async function getDataProducts(telco) {
   const response = await axios.get(`${BASE_URL}/data-products`, {
-    headers: headers(),
+    headers: dataHeaders(),
     params: telco ? { telco } : undefined
   });
   return response.data;
@@ -59,14 +67,14 @@ async function purchaseDataBundle({ externalReferenceID, msisdn, network, quanti
       Currency: currency,
       recipients: [{ msisdn: toE164(msisdn), network, quantity, unit, validity }]
     },
-    { headers: headers() }
+    { headers: dataHeaders() }
   );
   return response.data;
 }
 
 async function getDataBundleStatus(reference) {
   const response = await axios.get(`${BASE_URL}/data/bundles/status`, {
-    headers: headers(),
+    headers: dataHeaders(),
     params: { reference, includeDetails: true }
   });
   return response.data;
