@@ -61,8 +61,9 @@ function durationToHours(value) {
 }
 
 function packageForDuration(hours) {
-  const packageInfo = config.packages.find((pkg) => pkg.durationHours === hours);
-  if (!packageInfo) throw new Error(`No configured package matches a ${hours}-hour voucher.`);
+  const packages = Array.isArray(config.packages) ? config.packages : [];
+  const packageInfo = packages.find((pkg) => pkg.durationHours === hours);
+  if (!packageInfo) return { id: `WIFI_${hours}H` };
   return packageInfo;
 }
 

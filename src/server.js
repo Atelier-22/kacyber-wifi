@@ -107,6 +107,11 @@ app.post('/webhook', async (req, res) => {
 // wallet) succeeds or fails. This is separate from delivery of the
 // airtime/data/voucher — see /kacyber-callback below for that.
 app.post('/payment-callback', async (req, res) => {
+  if (!kacyberCallbackSecurity.isValidSignature(req)) {
+    console.warn('Rejected KaCyber payment callback with invalid signature');
+    return res.sendStatus(401);
+  }
+
   const payload = req.body || {};
   const callbackStatus = String(payload.status || payload.paymentStatus || '').toUpperCase();
   const externalId = payload.transactionId || payload.externalReferenceID || payload.externalReference;

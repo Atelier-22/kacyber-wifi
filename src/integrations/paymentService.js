@@ -108,8 +108,8 @@ async function initiatePayment(phoneNumber, amount, meta = {}) {
   try {
     let result;
     if (meta.productType === 'voucher') {
-      const pkg = config.packages.find((p) => p.id === meta.packageId);
-      const productCode = pkg ? pkg.productCode : 'WIFI_3H';
+      const pkg = Array.isArray(config.packages) ? config.packages.find((p) => p.id === meta.packageId) : null;
+      const productCode = pkg ? pkg.productCode : (meta.packageId || 'WIFI_3H');
       result = await wifiVoucherApi.purchaseVoucher({
         externalReferenceID: transactionId,
         productCode,
@@ -143,10 +143,37 @@ async function initiatePayment(phoneNumber, amount, meta = {}) {
 }
 
 async function getPaymentStatus(transactionId) {
-  const row = db.prepare('SELECT status, phone_number, amount FROM transactions WHERE transaction_id = ?').get(transactionId);
+  const row = db.prepare('SELECT * FROM transactions WHERE transaction_id = ?').get(transactionId);
   if (!row) {
     return { status: 'NOT_FOUND' };
   }
+
+  if (row.status === 'PENDING' && row.product_type === 'voucher') {
+    try {
+      const res = await wifiVoucherApi.getPurchaseStatus(transactionId);
+      const isPaid = res && (
+        String(res.paymentStatus).toUpperCase() === 'PAID' ||
+        String(res.status).toLowerCase() === 'completed' ||
+        (res.voucher && String(res.success) === 'true')
+      );
+
+      if (isPaid) {
+        markPaymentStatus(transactionId, 'SUCCESS');
+        if (res.voucher) {
+          const voucherService = require('./voucherService');
+          const { username, password } = voucherService.splitVoucherCode(res.voucher);
+          attachVoucher(transactionId, { username, password, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+        }
+        return { status: 'SUCCESS', phoneNumber: row.phone_number, amount: row.amount };
+      } else if (String(res.status).toLowerCase() === 'failed' || String(res.paymentStatus).toUpperCase() === 'FAILED') {
+        markPaymentStatus(transactionId, 'FAILED');
+        return { status: 'FAILED', phoneNumber: row.phone_number, amount: row.amount };
+      }
+    } catch (err) {
+      console.warn(`Could not check KaCyber voucher purchase status for ${transactionId}:`, err.message);
+    }
+  }
+
   return { status: row.status, phoneNumber: row.phone_number, amount: row.amount };
 }
 

@@ -134,5 +134,6 @@ module.exports = {
   getAvailablePackages,
   getPackageById,
   issueVoucher,
-  getActiveVoucher
+  getActiveVoucher,
+  splitVoucherCode
 };
