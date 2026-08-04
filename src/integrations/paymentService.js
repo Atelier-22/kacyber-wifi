@@ -6,15 +6,17 @@ const wifiVoucherApi = require('../wifiVoucherApi');
 let counter = getHighestCounter();
 
 function getHighestCounter() {
-  const row = db.prepare('SELECT transaction_id FROM transactions ORDER BY transaction_id DESC LIMIT 1').get();
-  if (!row) return 1245;
-  const num = Number(row.transaction_id.replace('TX', ''));
-  return Number.isNaN(num) ? 1245 : num;
+  const row = db.prepare('SELECT transaction_id FROM transactions ORDER BY created_at DESC LIMIT 1').get();
+  if (!row || !row.transaction_id) return 1;
+  const match = row.transaction_id.match(/\d+$/);
+  return match ? Number(match[0]) : 1;
 }
 
 function nextTransactionId() {
   counter += 1;
-  return `TX${String(counter).padStart(6, '0')}`;
+  const timePart = Date.now().toString().slice(-6);
+  const countPart = String(counter % 1000).padStart(3, '0');
+  return `TX${timePart}${countPart}`;
 }
 
 function methodForNetwork(network) {
