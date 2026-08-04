@@ -14,8 +14,8 @@ function startupMessages() {
   return [messages.greetingMessage(), messages.welcomeMessage()];
 }
 
-function getPackageById(id) {
-  return config.packages.find((pkg) => pkg.id === id);
+async function getPackageById(id) {
+  return voucherService.getPackageById(id);
 }
 
 function getAirtimeAmountById(id) {
@@ -50,8 +50,8 @@ function getProductInfo(session) {
     return { price: bundle.price, label: bundle.label };
   }
 
-  const pkg = getPackageById(session.data.packageId);
-  return { price: pkg.price, label: pkg.label };
+  const pkg = (session.data.packages || []).find((p) => p.id === session.data.packageId);
+  return { price: pkg ? pkg.price : 0, label: pkg ? pkg.label : 'WiFi Pass' };
 }
 
 async function handleIncomingMessage(userId, rawInput) {
@@ -136,8 +136,12 @@ async function handleMainMenu(userId, input) {
   }
 
   if (input === 'buy_voucher') {
-    updateSession(userId, { state: STATES.SELECT_PACKAGE, data: { productType: 'voucher' } });
-    return [messages.packageListMessage()];
+    const { packages } = await voucherService.getAvailablePackages();
+    updateSession(userId, {
+      state: STATES.SELECT_PACKAGE,
+      data: { productType: 'voucher', packages }
+    });
+    return [messages.packageListMessage(packages)];
   }
 
   if (input === 'buy_airtime') {
@@ -175,10 +179,12 @@ async function handleLookupNumberSelection(userId, input) {
 }
 
 function handlePackageSelection(userId, input) {
-  if (!validators.isValidPackageSelection(input, config.packages)) {
-    return [messages.invalidPackageMessage()];
+  const session = getSession(userId);
+  const packagesList = session.data.packages || [];
+  if (!validators.isValidPackageSelection(input, packagesList)) {
+    return [messages.invalidPackageMessage(packagesList)];
   }
-  const pkg = getPackageById(input.trim());
+  const pkg = packagesList.find((p) => p.id === input.trim());
   updateSession(userId, {
     state: STATES.SELECT_NUMBER,
     data: { packageId: pkg.id }
@@ -402,7 +408,8 @@ async function deliverProduct(session) {
     ];
   }
 
-  const pkg = getPackageById(session.data.packageId);
+  const pkg = (session.data.packages || []).find((p) => p.id === session.data.packageId)
+    || await getPackageById(session.data.packageId);
   const voucher = await voucherService.issueVoucher(phoneNumber, pkg, { transactionId });
   paymentService.attachVoucher(transactionId, voucher);
   return [
@@ -448,7 +455,8 @@ async function lookupVoucher(userId, phoneNumber) {
   const voucher = await voucherService.getActiveVoucher(phoneNumber);
   resetSession(userId);
   if (!voucher) return [messages.noVoucherFoundMessage()];
-  return [messages.voucherLookupResultMessage(voucher, getPackageById(voucher.packageId))];
+  const pkg = await getPackageById(voucher.packageId);
+  return [messages.voucherLookupResultMessage(voucher, pkg)];
 }
 
 function handleSupportState(userId, input) {
@@ -501,6 +509,25 @@ async function deliverVoucherOnPaymentSuccess(transactionId) {
     } catch (error) {
       console.error('Persisted airtime delivery failed', error.response?.data || error.message);
       paymentService.setDeliveryReference(transactionId, { reference: null, status: 'FAILED' });
+      return { userId: tx.whatsappUserId, message: [messages.productUnavailableMessage()] };
+    }
+  }
+
+  if (tx.productType === 'voucher') {
+    const display = validators.formatPhoneForDisplay(tx.phoneNumber);
+    try {
+      const pkg = await getPackageById(tx.packageId);
+      const voucher = await voucherService.issueVoucher(tx.phoneNumber, pkg, { transactionId });
+      paymentService.attachVoucher(transactionId, voucher);
+      return {
+        userId: tx.whatsappUserId,
+        message: [
+          messages.paymentReceivedMessage({ price: tx.amount, label: tx.packageLabel }, display, tx.amount),
+          messages.voucherDeliveredMessage(voucher, pkg)
+        ]
+      };
+    } catch (error) {
+      console.error('Persisted voucher delivery failed', error.message);
       return { userId: tx.whatsappUserId, message: [messages.productUnavailableMessage()] };
     }
   }

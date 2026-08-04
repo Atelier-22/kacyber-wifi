@@ -1,9 +1,9 @@
 const axios = require('axios');
-const config = require('../../config');
+const config = require('./config');
 
 function headers() {
   return {
-    'X-app-id': config.kacyberPay.appId,
+    'X-app-id': config.wifiVoucherApi.appId || config.kacyberPay.appId,
     'X-API-Key': config.kacyberPay.apiKey,
     'X-Merchant-ID': config.wifiVoucherApi.merchantId,
     'Content-Type': 'application/json'

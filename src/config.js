@@ -1,14 +1,14 @@
 require('dotenv').config();
 
 module.exports = {
-  port: process.env.PORT || 3000,
+  port: process.env.PORT,
 
   whatsapp: {
     verifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN,
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID,
     appSecret: process.env.WHATSAPP_APP_SECRET,
-    apiVersion: process.env.WHATSAPP_API_VERSION || 'v20.0'
+    apiVersion: process.env.WHATSAPP_API_VERSION
   },
 
   kacyberPay: {
@@ -30,8 +30,9 @@ module.exports = {
     cacheMs: 10 * 60 * 1000
   },
 
- 
+
   wifiVoucherApi: {
+    appId: process.env.WIFI_VOUCHER_APP_ID || null,
     merchantId: process.env.WIFI_VOUCHER_MERCHANT_ID || null,
     baseUrl:
       process.env.WIFI_VOUCHER_ENV === 'production'
@@ -39,7 +40,7 @@ module.exports = {
         : 'https://sandbox.kacyber.africa'
   },
 
- 
+
   admin: {
     username: process.env.ADMIN_USERNAME,
     password: process.env.ADMIN_PASSWORD
@@ -50,12 +51,6 @@ module.exports = {
     supportPhone: process.env.SUPPORT_PHONE || '+256700000000',
     supportEmail: process.env.SUPPORT_EMAIL || 'support@example.com'
   },
-
-  packages: [
-    { id: '1', label: '3 Hours', productCode: 'WIFI_3H', durationHours: 3, price: 1000 },
-    { id: '2', label: '16 Hours', productCode: 'WIFI_16H', durationHours: 16, price: 1500 },
-    { id: '3', label: '1 Month', productCode: 'WIFI_30D', durationHours: 744, price: 28000 }
-  ],
 
   // ── Preset airtime top-up amounts shown in the "Buy Airtime" list ──
   // Docs (Airtime 4.1 Request Body) state a minimum of UGX 500 — all presets below satisfy that.

@@ -1,0 +1,280 @@
+WiFi Voucher API Documentation
+1. Overview
+The WiFi Voucher API allows merchants to issue, sell, and redeem prepaid WiFi vouchers from their allocated voucher inventory.
+All WiFi Voucher API endpoints require the X-Merchant-ID header.
+2. API Environments
+Environment
+Base URL
+Production
+https://kacyberpay.com
+
+3. Authentication and Headers
+All WiFi Voucher endpoints require the following headers:
+Header
+Description
+Example
+X-app-id
+Application identifier
+APP_TEST_001
+X-API-Key
+API authentication key
+***************
+X-Merchant-ID
+Merchant identifier
+M_TEST_001
+Content-Type
+Request content format
+application/json
+
+4. Available WiFi Vouchers
+Endpoint
+GET
+/api/v1/wifi/vouchers/available
+Description
+Retrieves all available WiFi voucher products and the remaining voucher allocation for the merchant.
+Request Headers
+Header
+Value
+X-app-id
+APP_TEST_001
+X-API-Key
+***************
+X-Merchant-ID
+M_TEST_001
+Content-Type
+application/json
+
+Response
+HTTP 200 - Successful Response
+Field
+Description
+success
+Request status
+merchantID
+Merchant identifier
+products
+List of available voucher products
+productCode
+Unique product identifier
+name
+Voucher package name
+validity
+Voucher duration
+price
+Voucher price
+availableVouchers
+Remaining voucher quantity
+status
+Product availability status
+
+Sample Response
+{
+  "success": "true",
+  "merchantID": "M_TEST_001",
+  "products": [
+    {
+      "productCode": "WIFI_3H",
+      "name": "3 Hour Pass",
+      "validity": "3 hours",
+      "price": "UGX 1000",
+      "availableVouchers": 35,
+      "status": "available"
+    }
+  ]
+}
+5. Purchase WiFi Voucher (KaCyber Collects Payment)
+Endpoint
+POST
+/api/v1/wifi/vouchers/purchase
+Description
+Initiates a WiFi voucher purchase where KaCyber collects payment from the customer before issuing the voucher.
+Request Body
+Field
+Type
+Description
+externalReferenceID
+String
+Merchant transaction reference
+productCode
+String
+Voucher product code
+msisdn
+String
+Customer mobile number
+network
+String
+Customer mobile network
+customerName
+String
+Customer name
+
+Sample Request
+{
+  "externalReferenceID": "order-test-001",
+  "productCode": "WIFI_3H",
+  "msisdn": "+256700000001",
+  "network": "MTN",
+  "customerName": "Test Customer"
+}
+Response
+HTTP 200 - Purchase Initiated
+Field
+Description
+success
+Request status
+message
+Transaction message
+kacyberReference
+KaCyber transaction reference
+externalReferenceID
+Merchant transaction reference
+productCode
+Purchased product
+paymentReference
+Payment transaction reference
+amount
+Voucher amount
+status
+Current transaction status
+
+Sample Response
+{
+  "success": "true",
+  "message": "Purchase initiated, awaiting payment",
+  "kacyberReference": "KCYTEST001WIFI",
+  "externalReferenceID": "order-test-001",
+  "productCode": "WIFI_3H",
+  "paymentReference": "PAYTEST001",
+  "amount": "UGX 1000",
+  "status": "pending_payment"
+}
+6. Purchase Status
+Endpoint
+POST
+/api/v1/wifi/vouchers/purchase/status
+Description
+Checks the status of a WiFi voucher purchase transaction.
+Request Body
+{
+  "externalReferenceID": "order-test-001"
+}
+Response
+HTTP 200 - Successful Response
+Field
+Description
+success
+Request status
+kacyberReference
+KaCyber transaction reference
+externalReferenceID
+Merchant reference
+productCode
+Voucher product
+voucher
+Generated voucher code
+validity
+Voucher validity period
+amount
+Voucher amount
+status
+Voucher transaction status
+paymentStatus
+Payment status
+
+Sample Response
+{
+  "success": "true",
+  "kacyberReference": "KCYTEST001WIFI",
+  "externalReferenceID": "order-test-001",
+  "productCode": "WIFI_3H",
+  "voucher": "TEST-WIFI-987654",
+  "validity": "3 hours",
+  "amount": "UGX 1000",
+  "status": "completed",
+  "paymentStatus": "PAID"
+}
+7. Issue Voucher (Merchant Payment Already Collected)
+Endpoint
+POST
+/api/v1/wifi/vouchers/issue
+Description
+Allows merchants to request voucher issuance after collecting customer payment independently.
+Request Body
+Field
+Description
+externalReferenceID
+Merchant transaction reference
+productCode
+Voucher product identifier
+customer.msisdn
+Customer phone number
+payment.status
+Payment status
+payment.reference
+Merchant payment reference
+payment.amount
+Paid amount
+payment.currency
+Payment currency
+
+Sample Request
+{
+  "externalReferenceID": "order-test-002",
+  "productCode": "WIFI_3H",
+  "customer": {
+    "msisdn": "+256700000002"
+  },
+  "payment": {
+    "status": "PAID",
+    "reference": "PAYMENT_TEST_002",
+    "amount": 1000,
+    "currency": "UGX"
+  }
+}
+8. Voucher Status
+Endpoint
+POST
+/api/v1/wifi/vouchers/status
+Description
+Retrieves the current status of a voucher.
+Request Body
+{
+  "merchantID": "M_TEST_001",
+  "voucher": "TEST-WIFI-987654"
+}
+9. Mark Voucher as Used
+Endpoint
+POST
+/api/v1/wifi/vouchers/mark-used
+Description
+Updates the voucher status after successful customer usage.
+Request Body
+{
+  "merchantID": "M_TEST_001",
+  "voucher": "TEST-WIFI-987654"
+}
+10. Transaction Lookup
+Endpoint
+GET
+/api/v1/wifi/vouchers/transaction?reference=KCYTEST001WIFI
+Description
+Retrieves transaction details using the KaCyber transaction reference.
+11. Error Responses
+HTTP Code
+Error Code
+Description
+401
+KC01
+Invalid authentication credentials
+404
+KC04
+Unknown product, voucher, or transaction reference
+409
+KC05
+External reference ID reused with a different request body
+422
+KC03
+Validation failed or insufficient voucher availability
+
+
+

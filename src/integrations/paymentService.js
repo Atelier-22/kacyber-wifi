@@ -1,6 +1,7 @@
 const db = require('../db');
 const config = require('../config');
 const kacyberPay = require('./providers/kacyberPay');
+const wifiVoucherApi = require('../wifiVoucherApi');
 
 let counter = getHighestCounter();
 
@@ -103,14 +104,27 @@ async function initiatePayment(phoneNumber, amount, meta = {}) {
   }
 
   try {
-    const result = await kacyberPay.initiateCollection({
-      externalReferenceID: transactionId,
-      customerName: meta.customerName || 'KaCyber Customer',
-      narration: meta.packageLabel || 'WiFi Voucher Purchase',
-      amount,
-      msisdn: phoneNumber,
-      network: apiNetwork
-    });
+    let result;
+    if (meta.productType === 'voucher') {
+      const pkg = config.packages.find((p) => p.id === meta.packageId);
+      const productCode = pkg ? pkg.productCode : 'WIFI_3H';
+      result = await wifiVoucherApi.purchaseVoucher({
+        externalReferenceID: transactionId,
+        productCode,
+        msisdn: phoneNumber,
+        network: apiNetwork,
+        customerName: meta.customerName || 'KaCyber Customer'
+      });
+    } else {
+      result = await kacyberPay.initiateCollection({
+        externalReferenceID: transactionId,
+        customerName: meta.customerName || 'KaCyber Customer',
+        narration: meta.packageLabel || 'WiFi Voucher Purchase',
+        amount,
+        msisdn: phoneNumber,
+        network: apiNetwork
+      });
+    }
 
     db.prepare('UPDATE transactions SET reference = ? WHERE transaction_id = ?').run(
       result.kacyberReference,

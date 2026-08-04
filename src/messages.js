@@ -82,11 +82,12 @@ function invalidMenuMessage() {
 }
 
 // ── Shared row set for package selection ─────────────────────────
-function packageSections() {
+function packageSections(packagesList) {
+  const items = Array.isArray(packagesList) ? packagesList : [];
   return [
     {
       rows: [
-        ...config.packages.map((pkg) => ({
+        ...items.map((pkg) => ({
           id: pkg.id,
           title: pkg.label,
           description: formatCurrency(pkg.price)
@@ -97,21 +98,21 @@ function packageSections() {
   ];
 }
 
-function packageListMessage() {
+function packageListMessage(packagesList) {
   return list({
     header: 'Choose a Package',
     body: 'Select a WiFi voucher package:',
     buttonText: 'Select',
-    sections: packageSections()
+    sections: packageSections(packagesList)
   });
 }
 
-function invalidPackageMessage() {
+function invalidPackageMessage(packagesList) {
   return list({
     header: 'Choose a Package',
     body: `That package doesn't exist. Please choose from the list below.`,
     buttonText: 'Select',
-    sections: packageSections()
+    sections: packageSections(packagesList)
   });
 }
 

@@ -1,5 +1,5 @@
-const db = require('../db');
-const wifiVoucherApi = require('./providers/wifiVoucherApi');
+const db = require('./db');
+const wifiVoucherApi = require('./wifiVoucherApi');
 
 function generateCode(length) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
