@@ -14,25 +14,24 @@ function isValidSignature(req) {
     return false;
   }
 
-  const expected = crypto
+  const expectedHex = crypto
     .createHmac('sha256', secret)
     .update(req.rawBody)
     .digest('hex');
 
-  let expectedBuffer;
-  let receivedBuffer;
-  try {
-    expectedBuffer = Buffer.from(expected, 'hex');
-    receivedBuffer = Buffer.from(signatureHeader, 'hex');
-  } catch (error) {
-    return false;
+  const expectedBase64 = crypto
+    .createHmac('sha256', secret)
+    .update(req.rawBody)
+    .digest('base64');
+
+  const cleanHeader = String(signatureHeader).trim();
+
+  if (cleanHeader.toLowerCase() === expectedHex.toLowerCase() || cleanHeader === expectedBase64) {
+    return true;
   }
 
-  if (expectedBuffer.length !== receivedBuffer.length) {
-    return false;
-  }
-
-  return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+  console.warn(`KaCyber signature mismatch. Received: "${cleanHeader}", Expected (hex): "${expectedHex}", Expected (base64): "${expectedBase64}"`);
+  return false;
 }
 
 module.exports = { isValidSignature };

@@ -4,8 +4,8 @@
   "description": "WhatsApp chatbot for WiFi voucher sales - conversation flow, admin dashboard, webhook security",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
+    "start": "node init && node src/server.js",
+    "dev": "node init && nodemon src/server.js",
     "import:vouchers": "node src/importVouchers.js",
     "test": "node test/persisted-airtime-fulfillment.test.js"
   },

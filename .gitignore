@@ -2,10 +2,10 @@
 node_modules/
 
 # Environment variables (contains sensitive secrets)
-.env
 
 # OS files
 .DS_Store
+temp_auto_push.bat
 Thumbs.db
 
 # Log files
@@ -14,3 +14,6 @@ yarn-debug.log*
 yarn-error.log*
 logs/
 *.log
+.gitignore
+branch_structure.json
+config.bat
