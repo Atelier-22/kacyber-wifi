@@ -53,15 +53,11 @@ function extractIncomingValue(message) {
 }
 
 app.post('/webhook', async (req, res) => {
-  console.log('--- Incoming Webhook POST ---');
-  console.log('Body:', JSON.stringify(req.body, null, 2));
-
   if (!webhookSecurity.isValidSignature(req)) {
     console.warn('Rejected webhook with invalid signature');
     return res.sendStatus(401);
   }
 
-  console.log('Signature valid! Sending 200 OK to Meta.');
   res.sendStatus(200);
 
   const entry = req.body.entry && req.body.entry[0];
@@ -70,33 +66,24 @@ app.post('/webhook', async (req, res) => {
   const message = value && value.messages && value.messages[0];
 
   if (!message) {
-    console.log('No message content found in webhook change (possibly a status update).');
     return;
   }
 
-  console.log(`Received message ID: ${message.id} from user: ${message.from}`);
-
   if (!dedupeStore.isFirstDelivery(message.id)) {
-    console.log(`Duplicate message delivery detected for ID: ${message.id}. Ignoring.`);
     return;
   }
 
   const userId = message.from;
   const incoming = extractIncomingValue(message);
 
-  console.log(`Extracted incoming value: "${incoming}"`);
-
   if (incoming === null) {
-    console.log('Incoming value could not be extracted (unsupported type).');
     return;
   }
 
-  console.log(`Invoking conversationFlow with input: "${incoming}"`);
+  console.log(`[WhatsApp] Message from ${userId}: "${incoming}"`);
   const replies = await conversationFlow.handleIncomingMessage(userId, incoming);
-  console.log(`Flow generated ${replies.length} replies.`);
 
   for (const reply of replies) {
-    console.log(`Sending reply to ${userId}:`, typeof reply === 'string' ? reply : JSON.stringify(reply));
     await whatsappClient.sendMessage(userId, reply);
   }
 });
